@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zigarettenautomaten-Verwaltung</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232a78d6'/%3E%3Crect x='7' y='9' width='18' height='14' rx='2' fill='%23fcfcfb'/%3E%3Crect x='10' y='12' width='12' height='3' rx='1' fill='%232a78d6'/%3E%3Ccircle cx='12' cy='19' r='1.6' fill='%232a78d6'/%3E%3Ccircle cx='16' cy='19' r='1.6' fill='%232a78d6'/%3E%3Ccircle cx='20' cy='19' r='1.6' fill='%232a78d6'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>🚬 Automaten-Verwaltung</h1>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-dashboard" aria-selected="true" aria-controls="view-dashboard">Dashboard</button>
+      <button class="tab" role="tab" id="tab-map" aria-selected="false" aria-controls="view-map">Karte</button>
+    </nav>
+    <div class="spacer"></div>
+    <button id="btn-new-machine" class="btn-primary">+ Neuer Automat</button>
+  </header>
+
+  <!-- ============ Dashboard ============ -->
+  <section class="view active" id="view-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
+    <div class="dashboard">
+      <div class="kpi-row" id="kpi-row"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>Automaten nach Status</h2>
+          <p class="card-sub" id="machine-status-sub"></p>
+          <div class="stack" id="machine-status-stack"></div>
+          <div class="legend" id="machine-status-legend"></div>
+        </div>
+
+        <div class="card">
+          <h2>Werbeflächen nach Belegung</h2>
+          <p class="card-sub" id="ad-status-sub"></p>
+          <div class="stack" id="ad-status-stack"></div>
+          <div class="legend" id="ad-status-legend"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 0.85rem;">
+        <h2>Befüllstand je Automat</h2>
+        <p class="card-sub">Aufsteigend sortiert – oben steht, was zuerst nachgefüllt werden muss.</p>
+        <div class="bar-rows" id="fill-chart"></div>
+        <button class="table-toggle" data-toggle="fill-table">Als Tabelle anzeigen</button>
+        <div class="table-scroll hidden" id="fill-table"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>Nachfüllen nötig</h2>
+          <p class="card-sub" id="refill-sub"></p>
+          <div class="table-scroll" id="refill-table"></div>
+        </div>
+
+        <div class="card">
+          <h2>Auslaufende Werbeverträge</h2>
+          <p class="card-sub" id="expiring-sub"></p>
+          <div class="table-scroll" id="expiring-table"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Alle Werbeflächen</h2>
+        <p class="card-sub" id="slots-sub"></p>
+        <div class="table-scroll" id="slots-table"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Karte ============ -->
+  <section class="view" id="view-map" role="tabpanel" aria-labelledby="tab-map">
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="filter-row">
+          <label><input type="checkbox" class="filter-status" value="ok" checked /> OK</label>
+          <label><input type="checkbox" class="filter-status" value="defekt" checked /> Defekt</label>
+          <label><input type="checkbox" class="filter-status" value="ausser_betrieb" checked /> Außer Betrieb</label>
+        </div>
+        <ul id="machine-list" class="machine-list"></ul>
+      </aside>
+      <main id="map"></main>
+    </div>
+  </section>
+
+  <!-- ============ Automat anlegen/bearbeiten ============ -->
+  <div id="machine-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2 id="machine-modal-title">Automat</h2>
+      <form id="machine-form">
+        <input type="hidden" id="f-id" />
+        <label>Name
+          <input type="text" id="f-name" required />
+        </label>
+        <label>Adresse
+          <input type="text" id="f-address" required />
+        </label>
+        <div class="row">
+          <label>Breitengrad (lat)
+            <input type="number" step="any" id="f-lat" required />
+          </label>
+          <label>Längengrad (lng)
+            <input type="number" step="any" id="f-lng" required />
+          </label>
+        </div>
+        <p class="hint">Tipp: Klicke bei geöffnetem Formular auf die Karte, um die Koordinaten zu übernehmen.</p>
+        <div class="row">
+          <label>Status
+            <select id="f-status">
+              <option value="ok">OK</option>
+              <option value="defekt">Defekt</option>
+              <option value="ausser_betrieb">Außer Betrieb</option>
+            </select>
+          </label>
+          <label>Befüllstand: <span id="f-fill-value">100</span>%
+            <input type="range" min="0" max="100" id="f-fill" value="100" />
+          </label>
+        </div>
+        <label>Notizen
+          <textarea id="f-notes" rows="2"></textarea>
+        </label>
+
+        <div class="form-errors hidden" id="machine-errors"></div>
+
+        <div class="section-head" id="slots-section">
+          <h3>Werbeflächen</h3>
+          <button type="button" class="btn-secondary btn-small" id="btn-add-slot">+ Fläche</button>
+        </div>
+        <ul class="slot-list" id="machine-slot-list"></ul>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-delete-machine" class="btn-danger hidden">Löschen</button>
+          <div class="spacer"></div>
+          <button type="button" class="btn-secondary" id="btn-cancel-machine">Abbrechen</button>
+          <button type="submit" class="btn-primary">Speichern</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ Werbefläche anlegen/bearbeiten ============ -->
+  <div id="slot-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2 id="slot-modal-title">Werbefläche</h2>
+      <form id="slot-form">
+        <input type="hidden" id="s-id" />
+        <input type="hidden" id="s-machine-id" />
+        <div class="row">
+          <label>Position am Automaten
+            <select id="s-position">
+              <option value="vorne">Vorne</option>
+              <option value="links">Links</option>
+              <option value="rechts">Rechts</option>
+              <option value="oben">Oben</option>
+            </select>
+          </label>
+          <label>Status
+            <select id="s-status">
+              <option value="frei">Frei</option>
+              <option value="belegt">Belegt</option>
+              <option value="reserviert">Reserviert</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Breite (cm)
+            <input type="number" id="s-width" min="1" max="1000" value="40" />
+          </label>
+          <label>Höhe (cm)
+            <input type="number" id="s-height" min="1" max="1000" value="30" />
+          </label>
+          <label>Preis / Monat (€)
+            <input type="number" id="s-price" min="0" step="0.01" value="0" />
+          </label>
+        </div>
+
+        <div id="s-booking-fields">
+          <label>Werbepartner
+            <input type="text" id="s-advertiser" />
+          </label>
+          <label>Kampagne
+            <input type="text" id="s-campaign" />
+          </label>
+          <div class="row">
+            <label>Laufzeit von
+              <input type="date" id="s-start" />
+            </label>
+            <label>Laufzeit bis
+              <input type="date" id="s-end" />
+            </label>
+          </div>
+        </div>
+
+        <label>Notizen
+          <textarea id="s-notes" rows="2"></textarea>
+        </label>
+
+        <div class="form-errors hidden" id="slot-errors"></div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-delete-slot" class="btn-danger hidden">Löschen</button>
+          <div class="spacer"></div>
+          <button type="button" class="btn-secondary" id="btn-cancel-slot">Abbrechen</button>
+          <button type="submit" class="btn-primary">Speichern</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/vendor/leaflet/leaflet.js"></script>
+  <script src="common.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="map.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
