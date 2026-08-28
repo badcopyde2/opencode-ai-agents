@@ -1,0 +1,110 @@
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: #1f2937;
+  color: #fff;
+}
+.topbar h1 { font-size: 1.1rem; margin: 0; }
+
+.layout {
+  display: flex;
+  height: calc(100vh - 52px);
+}
+
+.sidebar {
+  width: 300px;
+  min-width: 300px;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+  background: #f9fafb;
+}
+
+.filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+}
+
+.machine-list { list-style: none; margin: 0; padding: 0; }
+.machine-list li {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+}
+.machine-list li:hover { background: #eef2ff; }
+.machine-list .m-name { font-weight: 600; display: block; }
+.machine-list .m-address { font-size: 0.8rem; color: #6b7280; display: block; }
+.machine-list .m-meta { font-size: 0.78rem; margin-top: 0.25rem; display: flex; gap: 0.5rem; align-items: center; }
+
+#map { flex: 1; }
+
+.badge {
+  display: inline-block;
+  width: 0.6rem; height: 0.6rem;
+  border-radius: 50%;
+}
+.badge.status-ok { background: #16a34a; }
+.badge.status-defekt { background: #dc2626; }
+.badge.status-ausser_betrieb { background: #6b7280; }
+
+.fill-bar-track {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fill-bar-fill { height: 100%; }
+
+.popup-content { font-size: 0.85rem; min-width: 180px; }
+.popup-content h3 { margin: 0 0 0.35rem; font-size: 0.95rem; }
+.popup-content .fill-bar-track { margin: 0.35rem 0; }
+.popup-content button { margin-top: 0.5rem; font-size: 0.8rem; }
+
+.btn-primary {
+  background: #2563eb; color: #fff; border: none;
+  padding: 0.45rem 0.9rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+}
+.btn-primary:hover { background: #1d4ed8; }
+.btn-danger {
+  background: #fff; color: #dc2626; border: 1px solid #dc2626;
+  padding: 0.45rem 0.9rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+}
+
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-backdrop.hidden { display: none; }
+.modal {
+  background: #fff; padding: 1.25rem 1.5rem; border-radius: 10px;
+  width: 380px; max-width: 90vw; max-height: 90vh; overflow-y: auto;
+}
+.modal h2 { margin-top: 0; font-size: 1.1rem; }
+.modal form label {
+  display: block; font-size: 0.8rem; font-weight: 600; margin-top: 0.65rem; color: #374151;
+}
+.modal form input, .modal form select, .modal form textarea {
+  width: 100%; margin-top: 0.25rem; padding: 0.4rem 0.5rem;
+  border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.85rem;
+}
+.modal .row { display: flex; gap: 0.75rem; }
+.modal .row label { flex: 1; }
+.modal .hint { font-size: 0.72rem; color: #9ca3af; margin: 0.25rem 0 0; }
+.modal-actions {
+  display: flex; align-items: center; gap: 0.5rem; margin-top: 1.1rem;
+}
+.modal-actions .spacer { flex: 1; }
+.modal-actions button[type="button"]:not(.btn-danger) {
+  background: #fff; border: 1px solid #d1d5db; padding: 0.45rem 0.9rem;
+  border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+}
